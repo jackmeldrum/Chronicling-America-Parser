@@ -1,0 +1,1 @@
+This folder contains documentation files related to the CAP project.
