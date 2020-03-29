@@ -1,0 +1,1 @@
+This folder contains files relevant to the database component of the CAP project.
