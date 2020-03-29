@@ -1,0 +1,1 @@
+This folder contains files related to the API component of the CAP project.
