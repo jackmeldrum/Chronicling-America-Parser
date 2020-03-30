@@ -1,0 +1,7 @@
+{"ocr": [
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/gu_keating_ver03.tar.bz2", "sha1": "ec39babb4d2ef11aef238a539eea8c02fb57e764", "size": 460943834, "name": "gu_keating_ver03.tar.bz2", "created": "2019-11-14T13:39:05-05:00"}, 
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/fu_eleven_ver01.tar.bz2", "sha1": "251fea7458a48e963fcf7ca6049f6c2172b4cd62", "size": 82530427, "name": "fu_eleven_ver01.tar.bz2", "created": "2019-07-08T11:22:58-04:00"},
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/lu_omahoney_ver01.tar.bz2", "sha1": "6df31fd03841a71514458bdb83b4aa532a76651b", "size": 748294849, "name": "lu_omahoney_ver01.tar.bz2", "created": "2019-07-03T02:00:01-04:00"}, 
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/wvu_ellis_ver01.tar.bz2", "sha1": "bc6d7f84ffe6404d27b86f36e9aa74d066766185", "size": 447804587, "name": "wvu_ellis_ver01.tar.bz2", "created": "2019-07-30T16:28:45-04:00"}, 
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/idhi_galapagos_ver01.tar.bz2", "sha1": "60d6becc63e4e1828506946fd8c4251e5d8bb151", "size": 752330184, "name": "idhi_galapagos_ver01.tar.bz2", "created": "2019-11-08T12:41:38-05:00"}
+]}
