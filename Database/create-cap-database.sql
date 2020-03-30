@@ -21,6 +21,7 @@ CREATE TABLE users
 	user_id INT NOT NULL AUTO_INCREMENT,
     password VARCHAR(255) NOT NULL, 
     email VARCHAR(255) NOT NULL,
+    session_token VARCHAR(255) NOT NULL,
     date_created DATETIME,
     date_updated DATETIME,
     PRIMARY KEY (user_id),
