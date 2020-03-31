@@ -1,0 +1,4 @@
+{"ocr": [
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/wvu_ellis_ver01.tar.bz2", "sha1": "bc6d7f84ffe6404d27b86f36e9aa74d066766185", "size": 447804587, "name": "wvu_ellis_ver01.tar.bz2", "created": "2019-07-30T16:28:45-04:00"},
+{"url": "https://chroniclingamerica.loc.gov/data/ocr/dlc_godzilla_ver01.tar.bz2", "sha1": "1e4276ac98403941567d79d855d796cc751bcfc0", "size": 248960868, "name": "dlc_godzilla_ver01.tar.bz2", "created": "2019-07-08T13:38:59-04:00"}
+]}
