@@ -2,7 +2,7 @@ This program is intended to download and unzip the OCR files provided by the Lib
 
 To run this program:
 
-	First make sure Python 3 is installed.
+	First make sure Python 3 is installed and in your PATH.
 	Second, make sure that the download location and json location have been set and saved in the config file (see below)
 	
 	If you wish to use IDLE:
@@ -13,6 +13,10 @@ To run this program:
 		Files will be within the designated download folder. 
 	
 	If you wish to use a command prompt:
+		Navigate in your CLI to the folder in which the .py's are contained.
+		Simply enter the following command:
+			python downloader.py
+		Replace "downloader.py" with an appropriate filename if you desire another version.
 
 Below is a description of the various files within this folder.
 
