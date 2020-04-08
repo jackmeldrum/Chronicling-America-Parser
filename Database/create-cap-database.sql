@@ -1,6 +1,6 @@
 CREATE TABLE articles
 (
-	article_id INT NOT NULL AUTO_INCREMENT,
+    article_id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255),
     article_text TEXT NOT NULL,
     newspaper VARCHAR(255),
@@ -18,19 +18,21 @@ CREATE TABLE articles
 
 CREATE TABLE users
 (
-	user_id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL AUTO_INCREMENT,
     password VARCHAR(255) NOT NULL, 
     email VARCHAR(255) NOT NULL,
     session_token VARCHAR(255) NOT NULL,
     date_created DATETIME,
     date_updated DATETIME,
+    isMod BOOLEAN NOT NULL DEFAULT 0,
+    isAdmin BOOLEAN NOT NULL DEFAULT 0,
     PRIMARY KEY (user_id),
     UNIQUE (email)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE queries
 (
-	query_id INT NOT NULL AUTO_INCREMENT,
+    query_id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     query_name VARCHAR(255),
     query_content VARCHAR(255),
@@ -44,7 +46,7 @@ CREATE TABLE queries
 
 CREATE TABLE batches
 (
-	batch_id INT NOT NULL AUTO_INCREMENT,
+    batch_id INT NOT NULL AUTO_INCREMENT,
     batch_name VARCHAR(255),
     is_uploaded BOOLEAN,
     date_uploaded DATETIME,
