@@ -115,10 +115,20 @@ def query_database_all_content():
     full_url = solr_server + urllib.parse.quote(query, "&=()") + end_tags
 
     # Execute built query
-    connection = urlopen(full_url)
+    try:
+        connection = urlopen(full_url)
+    except urllib.error.URLError as fail:
+        import traceback
+
+        print("exception")
+        print(fail)
+        print(fail.__class__)
+        traceback.print_tb(fail.__traceback__)
+        return jsonify(response="The Solr instance refused to connect, please contact the administrator")
 
     # Pull data out of query results
     response = json.load(connection)
+
     articles = {'articles': response['response']['docs']}
 
     return jsonify(articles)
@@ -139,7 +149,7 @@ def get_newspapers():
         print(fail)
         print(fail.__class__)
         traceback.print_tb(fail.__traceback__)
-        return jsonify(response="exception")
+        return jsonify(response="The Solr instance refused to connect, please contact the administrator")
 
     # Pull data out of query results
     response = json.load(connection)
@@ -157,30 +167,6 @@ def get_newspapers():
     return jsonify(newspapers=newspapers)
 
 
-@app.route('/getarticlecontent', methods=["POST"])
-@flask_cors.cross_origin()
-def get_article_content():
-    # Pull article ids out of JSON payload, Payload in form of:
-    # {"articleIDs" : ["000", "001", "002"]}
-    article_ids = request.json["articleIDs"]
-
-    # TODO: Create DB query
-    # Turn list into string of numbers, separated by a comma
-    in_delimiter = ","
-    in_parameter = in_delimiter.join([str(elem) for elem in article_ids])
-
-    # Build the DB query and execute
-    query = "SELECT * FROM articles WHERE articleID IN (%s)"
-    db.ping(True)
-    db_cursor.execute(query, (in_parameter,))
-
-    # Pull out ALL article data from results
-    data = db_cursor.fetchall()
-    # TODO: Add article Data to JSON response payload
-
-    return jsonify(articles=data)
-
-
 @app.route('/checkemailavailable', methods=["POST"])
 @flask_cors.cross_origin()
 def check_email_availability():
@@ -195,7 +181,10 @@ def check_email_availability():
         return jsonify(success=False, jsonKeyError="Request failed because field is missing from JSON payload",
                        missingKey=str(error))
 
-    is_available = not check_email(email_to_check)
+    try:
+        is_available = not check_email(email_to_check)
+    except sql.err.InterfaceError as e:
+        return jsonify(emailAvailable=False, message="Database refused connection, please contact administrator")
 
     return jsonify(emailAvailable=is_available)
 
@@ -216,7 +205,10 @@ def create_new_account():
                        missingKey=str(error))
 
     # double-check that the email is available to be used
-    email_available = not check_email(new_email)
+    try:
+        email_available = not check_email(new_email)
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
     if email_available:
         # Hash and salt the password for storing
         salted_password = hash_password(new_password)
@@ -225,9 +217,12 @@ def create_new_account():
         query = "INSERT INTO users(email, password) VALUES(%s, %s)"
 
         # Execute the query
-        db.ping(True)
-        db_cursor.execute(query, (new_email, salted_password))
-        db.commit()
+        try:
+            db.ping(True)
+            db_cursor.execute(query, (new_email, salted_password))
+            db.commit()
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
 
         return jsonify(email=new_email, success=True)
     else:
@@ -254,10 +249,11 @@ def login():
     db.ping(True)
     db_cursor.execute(pw_query, (email,))
     results = db_cursor.fetchone()
-    user_id = results[0]
-
-    if not user_id:
+    if results:
+        user_id = results[0]
+    else:
         return jsonify(success=False, session_token="")
+
     # Pull encrypted password from db to check
     check_success = verify_password(user_id, password)
 
@@ -295,10 +291,16 @@ def confirm_session_token():
 
     # Pull email attached to session token from db
     query = "SELECT email FROM users WHERE session_token = %s"
-    db.ping(True)
-    db_cursor.execute(query, (token,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (token,))
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
     results = db_cursor.fetchone()
-    db_email = results[0]
+    if results:
+        db_email = results[0]
+    else:
+        return jsonify(success=False, message="Session token not found")
 
     # Check if database email matches with the email given by response
     is_session_token_valid = email == db_email
@@ -324,13 +326,21 @@ def check_session_token_permissions():
     # Pull user permissions data using session token
 
     query = "SELECT user_id, email, isAdmin, isMod FROM users WHERE session_token = %s"
-    db.ping(True)
-    db_cursor.execute(query, (token,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (token,))
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
+
     results = db_cursor.fetchone()
-    user_id = results[0]
-    email = results[1]
-    is_admin = results[2] == 1
-    is_mod = results[3] == 1
+
+    if results:
+        user_id = results[0]
+        email = results[1]
+        is_admin = results[2] == 1
+        is_mod = results[3] == 1
+    else:
+        return jsonify(success=False, message="Session token not found")
 
     # Return that info back to the website
     return jsonify(userID=user_id, email=email, isAdmin=is_admin, isMod=is_mod)
@@ -358,11 +368,19 @@ def change_password():
     if check_session_token(user_email, session_token):
         # Confirm old password validity
         query = "SELECT user_id FROM users WHERE email = %s"
-        db.ping(True)
-        db_cursor.execute(query, (user_email,))
+        try:
+            db.ping(True)
+            db_cursor.execute(query, (user_email,))
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
+
         results = db_cursor.fetchone()
-        # noinspection PyPep8Naming
-        user_ID = results[0]
+        if results:
+            # noinspection PyPep8Naming
+            user_ID = results[0]
+        else:
+            return jsonify(success=False, message="Session token not found")
+
         if verify_password(user_ID, old_password):
             # old password checks out
             # Encrypt new password
@@ -414,9 +432,11 @@ def reset_password():
 
         # Change the password for the user entry
         query = "UPDATE users SET password = %s WHERE user_id = %s"
-        db.ping(True)
-        db_cursor.execute(query, (encrypted_password, user_id))
-        db.commit()
+        try:
+            db.ping(True)
+            db_cursor.execute(query, (encrypted_password, user_id))
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
 
         # Email the user their new password 
         import smtplib
@@ -459,9 +479,16 @@ def reset_password():
 
         message.attach(text_part)
         message.attach(html_part)
-        with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-            server.login("caar.info.service@gmail.com", password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+                server.login("caar.info.service@gmail.com", password)
+                server.sendmail(sender_email, receiver_email, message.as_string())
+        except Exception as e:
+            db.rollback()
+            return jsonify(success=False, message="Something went wrong with sending the email, the password was not reset")
+
+        # now that the email has been sent, commit the db transaction
+        db.commit()
 
         return jsonify(success=True, message="The email was sent")
     else:
@@ -492,10 +519,12 @@ def save_new_query():
 
     query = "INSERT INTO queries(query_name, query_content, user_id) VALUES( %s, %s, (SELECT user_id FROM users WHERE " \
             "session_token = %s)) "
-    db.ping(True)
-    db_cursor.execute(query, (query_name, query_string, session_token))
-    query = "COMMIT"
-    db_cursor.execute(query)
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (query_name, query_string, session_token))
+        db.commit()
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
 
     return jsonify(success=True)
 
@@ -504,12 +533,27 @@ def save_new_query():
 @flask_cors.cross_origin()
 def list_user_queries():
     # Grab session token from request, then the user id
-    session_token = request.json["sessionToken"]
+    try:
+        session_token = request.json["sessionToken"]
+    except KeyError as error:
+        import traceback
+
+        print("Keyerror, json payload missing the {} field".format(str(error)))
+
+        return jsonify(success=False, jsonKeyError="Request failed because field is missing from JSON payload",
+                       missingKey=str(error))
+
     user_id = grab_ID_from_token(session_token)
 
+    if not user_id:
+        return jsonify(success=False, message="Session token not valid")
+
     query = "SELECT * FROM queries WHERE user_id = %s"
-    db.ping(True)
-    db_cursor.execute(query, (user_id,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (user_id,))
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
 
     if db_cursor.rowcount:
         query_rows = db_cursor.fetchall()
@@ -536,30 +580,52 @@ def list_user_queries():
 
         return jsonify(query_contents)
     else:
-        return jsonify(success=False)
+        return jsonify(success=False, message="No queries found")
 
 
 @app.route('/deleteuserquery', methods=["POST"])
 @flask_cors.cross_origin()
 def delete_user_query():
-    session_token = request.json["sessionToken"]
-    saved_query_id = request.json["queryIDToDelete"]
+    try:
+        session_token = request.json["sessionToken"]
+        saved_query_id = request.json["queryIDToDelete"]
+    except KeyError as error:
+        import traceback
+
+        print("Keyerror, json payload missing the {} field".format(str(error)))
+
+        return jsonify(success=False, jsonKeyError="Request failed because field is missing from JSON payload",
+                       missingKey=str(error))
 
     request_user_id = grab_ID_from_token(session_token)
 
+    if not request_user_id:
+        return jsonify(success=False, message="Session token not valid")
+
     query = "SELECT user_id FROM queries WHERE query_id = %s"
-    db.ping(True)
-    db_cursor.execute(query, (saved_query_id,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (saved_query_id,))
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
+
     results = db_cursor.fetchone()
-    database_user_id = results[0]
+
+    if results:
+        database_user_id = results[0]
+    else:
+        return jsonify(success="False", message="This query ID is not valid")
 
     if request_user_id == database_user_id:
         # the logged in user owns the query, can delete it
         query = "DELETE FROM queries WHERE query_id = %s"
-        db.ping(True)
-        db_cursor.execute(query, (saved_query_id,))
-        query = "COMMIT"
-        db_cursor.execute(query)
+        try:
+            db.ping(True)
+            db_cursor.execute(query, (saved_query_id,))
+            db.commit()
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
+
         return jsonify(success=True, reason="The query was deleted successfully")
     else:
         return jsonify(success=False, reason="This user does not own this query")
@@ -589,9 +655,14 @@ def modify_user_permissions():
         return jsonify(success=False, message="no user found for session token: {}".format(token))
 
     if is_admin and check_email(promoted_user):
+
         query = "UPDATE users SET isMod = %s WHERE email = %s"
-        success = db_cursor.execute(query, (promote, promoted_user))
-        db.commit()
+        try:
+            db.ping()
+            success = db_cursor.execute(query, (promote, promoted_user))
+            db.commit()
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
 
         return jsonify(success=success == 1)
     else:
@@ -612,6 +683,7 @@ def get_all_users():
 
         return jsonify(success=False, jsonKeyError="Request failed because field is missing from JSON payload",
                        missingKey=str(error))
+
     admin_status = check_admin(token)
 
     if admin_status[0]:
@@ -619,31 +691,29 @@ def get_all_users():
     else:
         return jsonify(success=False, message="no user found for session token: {}".format(token))
 
-    # query = "SELECT isAdmin FROM users WHERE session_token = %s"
-    # db_cursor.execute(query, (token,))
-    # results = db_cursor.fetchone()
-
-    # if results:
-    #    is_admin = results[0] == 1
-    # else:
-    #    return jsonify(success=False, message="no user found for session token: {}".format(token))
-
     if is_admin:
         query = "SELECT user_id, email, isMod, isAdmin FROM users WHERE session_token <> %s"
-        db_cursor.execute(query, (token,))
+        try:
+            db.ping()
+            db_cursor.execute(query, (token,))
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
         results = db_cursor.fetchall()
-        users_list = []
-        for entry in results:
-            user = {
-                "userID": entry[0],
-                "email": entry[1],
-                "isMod": entry[2] == 1,
-                "isAdmin": entry[3] == 1
-            }
+        if results:
+            users_list = []
+            for entry in results:
+                user = {
+                    "userID": entry[0],
+                    "email": entry[1],
+                    "isMod": entry[2] == 1,
+                    "isAdmin": entry[3] == 1
+                }
 
-            users_list.append(user)
+                users_list.append(user)
 
-        return jsonify(success=True, users=users_list)
+            return jsonify(success=True, users=users_list)
+        else:
+            return jsonify(success=False, message="No users found")
 
     else:
         # The request was made by someone who isn't an admin
@@ -653,8 +723,11 @@ def get_all_users():
 def check_email(email):
     # create query
     query = "SELECT * FROM users WHERE email = %s"
-    db.ping(True)
-    db_cursor.execute(query, (email,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (email,))
+    except sql.err.InterfaceError as e:
+        return False
 
     if db_cursor.rowcount:
         return True
@@ -675,10 +748,18 @@ def verify_password(userid, provided_password):
     """Verify a stored password against one provided by user"""
     # Get stored password for given id
     query = "SELECT password FROM users WHERE user_id = %s"
-    db.ping(True)
-    db_cursor.execute(query, (userid,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (userid,))
+    except sql.err.InterfaceError as e:
+        return False
     results = db_cursor.fetchone()
-    stored_password = results[0]
+
+    if results:
+        stored_password = results[0]
+    else:
+        return False
+
     salt = stored_password[:64]
     stored_password = stored_password[64:]
     pwdhash = hashlib.pbkdf2_hmac('sha512',
@@ -691,10 +772,17 @@ def verify_password(userid, provided_password):
 
 def check_session_token(email, session_token):
     query = "SELECT email FROM users WHERE session_token = %s"
-    db.ping(True)
-    db_cursor.execute(query, (session_token,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (session_token,))
+    except sql.err.InterfaceError as e:
+        return False
+
     results = db_cursor.fetchone()
-    db_email = results[0]
+    if results:
+        db_email = results[0]
+    else:
+        return False
 
     return email == db_email
 
@@ -702,12 +790,17 @@ def check_session_token(email, session_token):
 # noinspection PyPep8Naming
 def grab_ID_from_token(session_token):
     query = "SELECT user_id FROM users WHERE session_token = %s"
-    db.ping(True)
-    db_cursor.execute(query, (session_token,))
-    results = db_cursor.fetchone()
-    db_id = results[0]
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (session_token,))
+    except sql.err.InterfaceError as e:
+        return None
 
-    return db_id
+    results = db_cursor.fetchone()
+    if results:
+        return results[0]
+    else:
+        return None
 
 
 # noinspection PyPep8Naming
@@ -723,8 +816,12 @@ def grab_ID_from_email(email):
 
 def check_admin(session_token):
     query = "SELECT isAdmin FROM users WHERE session_token = %s"
-    db.ping(True)
-    db_cursor.execute(query, (session_token,))
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (session_token,))
+    except sql.err.InterfaceError as e:
+        return False, False
+
     results = db_cursor.fetchone()
 
     if results:
