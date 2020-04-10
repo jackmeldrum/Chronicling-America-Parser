@@ -1,5 +1,7 @@
 This program is intended to download and unzip the OCR files provided by the Library of Congress.
 
+Several versions exist of this program. the "RAM intense" version will function only with sufficient RAM. The plain "downloader.py" version should work with any RAM amount above 1024 Bytes. Thus, it is suggested to run this version.
+
 To run this program:
 
 	First make sure Python 3 is installed and in your PATH.
