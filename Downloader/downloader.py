@@ -2,7 +2,7 @@
 # Loops through a given JSON file, extracts file locations, and downloads them
 # 
 
-import urllib
+import urllib.request
 import logging
 import configparser
 import json
@@ -27,7 +27,9 @@ jsonLocation = config['FILEINFO']['jsonFile']
 
 # Begin by opening the json file, then load it. 
 # json.load does that hard work here of parsing json for us.
-openedFile = open("/home/josh/Downloader/ocr_just_one.json", 'r')
+# First line, openedFile can fix issue with incorrect path names in Linux
+# openedFile = open("/home/josh/Downloader/ocr_just_one.json", 'r')
+openedFile = open(jsonLocation, 'r')
 data = json.load(openedFile)
 
 # Create a variable to store the size of the total download. (In bytes)
@@ -44,21 +46,27 @@ for ocrFile in data['ocr']:
 
 	# Get the size of the file from the OCR.	
     totalBytes += ocrFile['size']
+    filePath = dlLocation + ocrFile['name']
+    print("Downloading a new file from: " + ocrFile['url'])
     # Open a connection to the web version of the file.
-    downloadedFile = urllib.urlopen(ocrFile['url'])
-    print("Got a new file URL, downloading now...")
+    fileSource = urllib.request.urlopen(ocrFile['url'])
+    # Proceed to download the file in chunks
+    with open(filePath ,'wb') as f:
+        while True:
+            chunk = fileSource.read(1024)
+            if not chunk:
+                break 
+            f.write(chunk)
 
-    # Proceed to download the file
-    fullFile = downloadedFile.read()
-    print("Downloaded file")
+    f.close()
+    
+    print("Downloaded the file, proceeding to extract it.")
 
-    # Convert the file from a generic byte array to a usable tarfile
-    tarFile = io.BytesIO(fullFile)
     # Open the tarfile
-    saveableTar = tarfile.open(fileobj = tarFile)
+    saveableTar = tarfile.open(name = filePath, mode = 'r')
     # Extract the tarfile
     saveableTar.extractall(path = dlLocation)
-    print("Extracted file")
+    print("Got and extracted file \"" + ocrFile['name'] + "\"")
     saveableTar.close()
 
     #END LOOP
@@ -78,6 +86,7 @@ print("Downloaded files in: " + time + " seconds.")
 totalGB = (float(totalBytes) / 1000000000.0)
 print(str(totalGB) + "GB of data was downloaded.")
 
+print("Download and processing speed of " + str((float(totalBytes)/1000000000.0) / totalTime) + " GB/s")
 
 # Below is useful to pause before end of execution. Remove the # to 
 # cause the program to wait for user input at end of execution.
