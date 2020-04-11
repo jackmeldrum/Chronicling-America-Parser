@@ -1,0 +1,60 @@
+/queryalldata
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: response: "The Solr instance refused to connect, please contact the administrator"
+/getnewspapers
+	error 1: response: "The Solr instance refused to connect, please contact the administrator"
+/checkemailavailable
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: emailAvailable: false, message: "Database refused connection, please contact administrator"
+	"error" 3: emailAvailable: false, message: "email is already in use"
+/createaccount
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "email is already in use"
+/login
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, session_token: ""
+/confirmsession
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Session token not found"
+/checkpermissions
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Session token not found"
+/changepassword
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Session token not found"
+	"error" 4: success: false, message: "Existing password incorrect"
+	"error" 5: success: false, message: "Session token did not match"
+/resetpassword
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Something went wrong with sending the email, the password was not reset"
+	"error" 4: success: false, message: "This email is not registered"
+/savenewquery
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+/recalluserqueries
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Session token not valid"
+	"error" 4: success: false, message: "No queries found"
+/deleteuserquery
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "Session token not valid"
+	error 4: success: false, message: "This query ID is not valid"
+	error 5: success: false, message: "This user does not own this query"
+/changeuserpermissions
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "no user found for session token: <the token in the JSON request>"
+	error 4: success: false, message: "The request failed, either the request was not initiated by an admin or the desired user to promote was not found
+/getallusers
+	error 1: success: false, jsonKeyError: "Request failed because field is missing from JSON payload", missingKey: <name of the key that was missing>
+	error 2: success: false, message: "Database refused connection, please contact administrator"
+	error 3: success: false, message: "no user found for session token: <the token in the JSON request>"
+	error 4: success: false, message: "No users found"
+	error 5: success: false, message: "Invalid Session Token"

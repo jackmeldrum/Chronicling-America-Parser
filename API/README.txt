@@ -1,4 +1,4 @@
-To create an Elastic Beanstalk instance to host the Flask API
+To create an Elastic Beanstalk instance to host the Flask API:
 
 	Log in to the AWS account that is being used for the CAAR application
 	
@@ -46,7 +46,7 @@ To create an Elastic Beanstalk instance to host the Flask API
 
 	
 
-To Create a more streamlined <prefix>.elasticbeanstalk.com URL after initial creation
+To Create a more streamlined <prefix>.elasticbeanstalk.com URL after initial creation:
 
 	From the Application that was created in the above step, click the "Create a new environment" button
 
@@ -81,7 +81,7 @@ To Create a more streamlined <prefix>.elasticbeanstalk.com URL after initial cre
 		Follow the prompt that comes up, this will remove this extra environment and save on server time
 		
 
-To Update the API code
+To Update the API code:
 
 	Zip up the requirements.txt file and ALL of the needed .py files
 
@@ -94,3 +94,4 @@ To Update the API code
 	Modify the "Version Label" if desired, and click "Deploy"
 
 		After a few minutes, the API will be updated, and the changes made will be available at the URL for the environment used
+		

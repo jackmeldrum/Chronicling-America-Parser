@@ -27,7 +27,7 @@ db = sql.connect(host='db-mysql-cap.cilr4i0zh8cq.us-east-1.rds.amazonaws.com',
 db_cursor = db.cursor()
 
 # store solr server
-solr_server = 'http://ec2-52-91-24-85.compute-1.amazonaws.com:8983/solr/collection1/select?'
+solr_server = 'http://ec2-3-87-73-69.compute-1.amazonaws.com:8983/solr/collection1/select?'
 
 
 @app.route('/')
@@ -140,6 +140,7 @@ def get_newspapers():
     # Create sql statement that returns unique values and execute it
     query = solr_server + "&q=newspaper%3A*&group=true&group.field=newspaper&wt=json"
     # noinspection PyUnresolvedReferences
+    # try:
     try:
         connection = urlopen(query)
     except urllib.error.URLError as fail:
@@ -185,6 +186,11 @@ def check_email_availability():
         is_available = not check_email(email_to_check)
     except sql.err.InterfaceError as e:
         return jsonify(emailAvailable=False, message="Database refused connection, please contact administrator")
+
+    if is_available:
+        message = ""
+    else:
+        message = "email is already in use"
 
     return jsonify(emailAvailable=is_available)
 
@@ -265,8 +271,6 @@ def login():
         db.ping(True)
         db_cursor.execute(query, (token, email))
         db.commit()
-        # query = "COMMIT"
-        # db_cursor.execute(query)
         # Respond to website
         return jsonify(success=check_success, session_token=token)
     else:
@@ -390,8 +394,7 @@ def change_password():
             query = "UPDATE users SET password = %s WHERE user_id = %s"
             db.ping(True)
             db_cursor.execute(query, (encrypted_password, user_ID))
-            query = "COMMIT"
-            db_cursor.execute(query)
+            db.commit()
             return jsonify(success=True, reason="Password changed successfully")
         else:
             # Old password not correct
@@ -485,7 +488,8 @@ def reset_password():
                 server.sendmail(sender_email, receiver_email, message.as_string())
         except Exception as e:
             db.rollback()
-            return jsonify(success=False, message="Something went wrong with sending the email, the password was not reset")
+            return jsonify(success=False,
+                           message="Something went wrong with sending the email, the password was not reset")
 
         # now that the email has been sent, commit the db transaction
         db.commit()
