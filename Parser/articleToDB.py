@@ -140,8 +140,11 @@ def putArticlesInDatabase(commitIn):
         log.info('# of articles parsed = ' + str(len(articles)))
     else:
         # Insert new articles into Solr Search tool
-        os.system('curl -s http://localhost:8983/solr/mysqlconnect/dataimport?command=full-import > /dev/null')
-        log.info('# of articles inserted = ' + str(len(articles)))
+        results = os.system('curl -s http://ec2-3-87-73-69.compute-1.amazonaws.com:8983/solr/collection1/dataimport?command=delta-import >> solr_log.txt')
+        if results == 0:
+            log.info('# of articles inserted = ' + str(len(articles)))
+        else:
+            log.error('SOLR IMPORT REQUEST FAILED, IS THE SOLR LINK CORRECT?')
 
     return 1
 
