@@ -31,7 +31,7 @@ def checkDatabaseForArticle(mydb, article):
 # Needs to be run in directory where metadata.json and articles.json exist
 # INPUT - input=0: no DB insert, prints # of articles parsed. input=2: no DB insert and prints title of each article. no input: inserts into DB
 # Before inserting into DB it will check if the first artcle of page already exists in DB. If it does, it will exit and return 0. Otherwse, will insert all articles and return 1
-def putArticlesInDatabase(commitIn):
+def putArticlesInDatabase(commitIn, root):
     # article metadata in metadata.json and article content in articles.json
     
     def poll_fetch(url):
@@ -60,6 +60,21 @@ def putArticlesInDatabase(commitIn):
     # no articles to insert; return early
     if len(articles) == 0:
         return 0
+
+    # connect to mysql database "chronicles"
+    if(commitIn == 1):
+        mydb = mysql.connector.connect(
+            host="db-mysql-cap.cilr4i0zh8cq.us-east-1.rds.amazonaws.com",
+            user="admin",
+            passwd="Group21capdb",
+            database="CAP"
+        )
+
+    # Check the DB to see if it already contains the first article on this page.
+    # If it does exist, stops this process before inserting any articles from this page to DB
+    if commitIn == 1 and checkDatabaseForArticle(mydb, articles[0]):
+        log.warn("This page is already inserted.")
+        return 0
     
     # gets latitude and longitude from GeoNames
 
@@ -80,7 +95,7 @@ def putArticlesInDatabase(commitIn):
                 log.info("Trying again... (attempts: {}, cooldown: {} sec)".format(attempt + 1, 5 * attempt))
                 time.sleep(5 * attempt)
                 attempt += 1
-                counter = (counter + 1) % len(mylist)
+                counter = (counter + 1) % len(userList)
             else:
                 geoInfo['lat'] = g.lat
                 geoInfo['lon'] = g.lng
@@ -88,21 +103,6 @@ def putArticlesInDatabase(commitIn):
 
         if attempt == 10:
             log.warn("Giving up and using (0.0, 0.0) as coordinates.")
-
-    # connect to mysql database "chronicles"
-    if(commitIn == 1):
-        mydb = mysql.connector.connect(
-            host="db-mysql-cap.cilr4i0zh8cq.us-east-1.rds.amazonaws.com",
-            user="admin",
-            passwd="Group21capdb",
-            database="CAP"
-        )
-
-    # Check the DB to see if it already contains the first article on this page.
-    # If it does exist, stops this process before inserting any articles from this page to DB
-    if commitIn == 1 and checkDatabaseForArticle(mydb, articles[0]):
-        log.warn("This page is already inserted.")
-        return 0
 
     for article_content in articles:
 
@@ -140,7 +140,8 @@ def putArticlesInDatabase(commitIn):
         log.info('# of articles parsed = ' + str(len(articles)))
     else:
         # Insert new articles into Solr Search tool
-        results = os.system('curl -s http://ec2-3-87-73-69.compute-1.amazonaws.com:8983/solr/collection1/dataimport?command=delta-import >> solr_log.txt')
+        
+        results = os.system('curl -s http://ec2-3-87-73-69.compute-1.amazonaws.com:8983/solr/collection1/dataimport?command=delta-import >>' + root + '/solr_log.txt')
         if results == 0:
             log.info('# of articles inserted = ' + str(len(articles)))
         else:

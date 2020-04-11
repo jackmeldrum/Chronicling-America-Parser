@@ -29,7 +29,7 @@ def dedent():
 
 def _log(v, c, s):
     if verbosity >= v:
-        print(c + ': ' + space * level + s + '\033[0m', file=sys.stderr)
+          print(c + ': ' + space * level + s + '\033[0m', file=sys.stderr)
 
 def debug(s=""):
     _log(DEBUG, '\033[94mD', str(s))
