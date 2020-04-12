@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+'''
+python3 main.py --start 1 2 794
+'''
+
 # included modules
 import json
 import math
@@ -12,6 +16,7 @@ from xml.sax import SAXParseException
 import requests
 # pip modules
 from PIL import Image, ImageFile
+
 
 import articleToDB
 # local modules
@@ -39,7 +44,7 @@ def poll_fetch(url):
     return None
 
 
-def fetch_batch(batch):
+def fetch_batch(batch, start_issue):
     metadata = {}
     batch_url = CA_DOMAIN + "/batches/" + batch + ".json"
 
@@ -57,6 +62,12 @@ def fetch_batch(batch):
     for issue in batch_json['issues']:
         metadata['newspaper'] = issue['title']['name']
         metadata['publication_date'] = issue['date_issued']
+        
+        if (batch_json['issues'].index(issue)+1) < start_issue:
+          continue
+        # unit testing
+        #if (batch_json['issues'].index(issue)+1) > start_issue:
+        #  return
 
         log.info('Issue {}/{}: "{}", {}'.format(
             batch_json['issues'].index(issue) + 1,
@@ -160,7 +171,7 @@ def fetch_batch(batch):
                     log.error("Could not get image: {}".format(e))
                     log.warn("Skipping annotation stage for this page.")
 
-            handle_page()
+            handle_page(root)
 
             # log.info("Cleaning up...")
             for file in os.listdir():
@@ -172,10 +183,10 @@ def fetch_batch(batch):
         log.dedent()
 
     log.dedent()
-    log.info("Done fetching batch " + batch)
+    log.info("Done fetching this batch, onto next")
 
 
-def handle_page():
+def handle_page(root):
     # log.info("Parsing ALTO file...")
 
     # in case server gives an HTTP 200 response with invalid data, try
@@ -214,7 +225,7 @@ def handle_page():
 
     # insert into database
     try:
-        articleToDB.putArticlesInDatabase(commitIn=1)
+        articleToDB.putArticlesInDatabase(commitIn=1, root=root)
     except Exception as e:
         # if database insertion fails, quit completely.
         # have user restart process where it failed with
@@ -314,12 +325,36 @@ if __name__ == "__main__":
     batches_page_json = None
     start_page = 1
 
+    start_batch = 1
+    curr_batch = 1
+    
+    start_issue = 1
+    
+
+    # The README mentions you can start on any batch page
     if '--start' in sys.argv:
         idx = sys.argv.index('--start') + 1
         if idx >= len(sys.argv) or sys.argv[idx][:1] == '-':
             log.error("No batch page number given after `--start` argument")
             sys.exit(2)
         start_page = int(sys.argv[idx])
+    
+    # However you can add more arguments to specify an newspaper number and page number as well
+    # This is to pick up where you left off if you needed to end the program before finishing
+    # With better hardware, this shouldn't be needed anymores
+    
+        idy = idx + 1
+        if idy >= len(sys.argv) or sys.argv[idy][:1] == '-':
+            pass
+        else:
+            start_batch = int(sys.argv[idy])
+        
+        
+        idz = idy + 1
+        if idz >= len(sys.argv) or sys.argv[idz][:1] == '-':
+            pass
+        else:
+            start_issue = int(sys.argv[idz])
 
     batch_page_url = CA_DOMAIN + "/batches/" + str(start_page) + ".json"
 
@@ -339,7 +374,15 @@ if __name__ == "__main__":
             log.indent()
             for batch_info in batches_page_json['batches']:
                 log.info('Batch: ' + batch_info['name'])
-                fetch_batch(batch_info['name'])
+                if(curr_batch < start_batch):
+                  pass
+                # unit testing
+                #elif(curr_batch > start_batch):
+                #  sys.exit(0)
+                else:
+                  fetch_batch(batch_info['name'], start_issue)
+                curr_batch = curr_batch + 1
+                  
             log.dedent()
             try:
                 batches_page_json = poll_fetch(batches_page_json['next']).json()
