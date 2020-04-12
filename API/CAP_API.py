@@ -618,7 +618,7 @@ def delete_user_query():
     if results:
         database_user_id = results[0]
     else:
-        return jsonify(success="False", message="This query ID is not valid")
+        return jsonify(success=False, message="This query ID is not valid")
 
     if request_user_id == database_user_id:
         # the logged in user owns the query, can delete it
@@ -668,7 +668,7 @@ def modify_user_query():
     if results:
         database_user_id = results[0]
     else:
-        return jsonify(success="False", message="This query ID is not valid")
+        return jsonify(success=False, message="This query ID is not valid")
 
     if request_user_id == database_user_id:
         # User owns query, can update it
