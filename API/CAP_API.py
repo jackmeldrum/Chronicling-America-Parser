@@ -635,6 +635,56 @@ def delete_user_query():
         return jsonify(success=False, reason="This user does not own this query")
 
 
+@app.route('/modifyuserquery', methods=["POST"])
+@flask_cors.cross_origin()
+def modify_user_query():
+    try:
+        session_token = request.json["sessionToken"]
+        saved_query_id = request.json["queryIDToChange"]
+        new_query_name = request.json["newQueryName"]
+        new_query_string = str(request.json["newQueryContent"])
+    except KeyError as error:
+        import traceback
+
+        print("Keyerror, json payload missing the {} field".format(str(error)))
+
+        return jsonify(success=False, jsonKeyError="Request failed because field is missing from JSON payload",
+                       missingKey=str(error))
+
+    request_user_id = grab_ID_from_token(session_token)
+
+    if not request_user_id:
+        return jsonify(success=False, message="Session token not valid")
+
+    query = "SELECT user_id FROM queries WHERE query_id = %s"
+    try:
+        db.ping(True)
+        db_cursor.execute(query, (saved_query_id,))
+    except sql.err.InterfaceError as e:
+        return jsonify(success=False, message="Database refused connection, please contact administrator")
+
+    results = db_cursor.fetchone()
+
+    if results:
+        database_user_id = results[0]
+    else:
+        return jsonify(success="False", message="This query ID is not valid")
+
+    if request_user_id == database_user_id:
+        # User owns query, can update it
+        query = "UPDATE queries SET query_name = %s, query_content = %s WHERE query_id = %s"
+        try:
+            db.ping(True)
+            db_cursor.execute(query, (new_query_name, new_query_string, saved_query_id))
+            db.commit()
+        except sql.err.InterfaceError as e:
+            return jsonify(success=False, message="Database refused connection, please contact administrator")
+
+        return jsonify(success=True)
+    else:
+        return jsonify(success=False, message="This user does not own this query")
+
+
 @app.route('/changeuserpermissions', methods=["POST"])
 @flask_cors.cross_origin()
 def modify_user_permissions():
