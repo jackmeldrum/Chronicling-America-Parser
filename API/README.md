@@ -16,37 +16,37 @@ To create an Elastic Beanstalk instance to host the Flask API
 
 1. This will bring you to a setup page that has a number of options
 
- 1. Application Name: Give the application a name, this will be used to identify a specific application instance, and influence the link that will be needed by the website
+	 - Application Name: Give the application a name, this will be used to identify a specific application instance, and influence the link that will be needed by the website
 
- 1. Application Tags: Can be ignored. Tags are not necessary for the API to function, they are for administrative purposes.
+	- Application Tags: Can be ignored. Tags are not necessary for the API to function, they are for administrative purposes.
 
- 1. Platform: For Platform, select "Python", for Platform Branch, select "Python 3.6 running on 64bit Amazon Linux", Platform version can be left at the default value
+	- Platform: For Platform, select "Python", for Platform Branch, select "Python 3.6 running on 64bit Amazon Linux", Platform version can be left at the default value
 
- 1. Application Code: Select "Upload your code", this will reveal the next option
+	- Application Code: Select "Upload your code", this will reveal the next option
 
- 1. Source Code Origin: Select Local file. Zip up the .py files needed for the API along with the requirements.txt file. Click the choose file button and select that zip file from the dialog box that appears
+	- Source Code Origin: Select Local file. Zip up the .py files needed for the API along with the requirements.txt file. Click the choose file button and select that zip file from the dialog box that appears
 
- 1. Application Code Tags: These can also be ignored.
+	- Application Code Tags: These can also be ignored.
 
 1. When all options are configured, click "Create Application"
 
 1. When all options are configured, click "Configure More Options"
 
- 1. This will start the process of creating the application, and may take a few minutes
+	 - This will start the process of creating the application, and may take a few minutes
 
 1. When setup is finished, you may see an entry in the "Recent Events" table
 
- 1. ERROR Your WSGIPath refers to a file that does not exist
+	- ERROR Your WSGIPath refers to a file that does not exist
 
  1. If the above error is present, click "Configuration" in the sidebar
 
- 1. From the list of categories shown, click the "Edit" button for the "Software" entry
+ 2. From the list of categories shown, click the "Edit" button for the "Software" entry
 
- 1. For "WSGIPath", enter the filename of the primary .py file for the Flask application
+ 3. For "WSGIPath", enter the filename of the primary .py file for the Flask application
 
- 1. Click the "Apply" button at the bottom of the page
+ 4. Click the "Apply" button at the bottom of the page
 
- 1. AWS will reconfigure the environment to reflect this change, this may take a few minutes
+	- AWS will reconfigure the environment to reflect this change, this may take a few minutes
 
 1. Once AWS finishes applying any changes, the API should be live, and can be called by external applications, such as the CAAR website
 
@@ -59,13 +59,13 @@ To Create a more streamlined <prefix>.elasticbeanstalk.com URL after initial cre
 
  1. Leave the default environment tier, click the "Select" button, a number of options will be available
 
-  1. Environment Information: Type in the desired url prefix in the "domain" field
+	  - Environment Information: Type in the desired url prefix in the "domain" field
 
-    1. Click the "Check availibility" button, and if it is not available, use a different prefix
+		   - Click the "Check availibility" button, and if it is not available, use a different prefix
 
-  1. Platform: Select "Python" from the "Platform" dropdown, leave the rest as the defaults
+	- Platform: Select "Python" from the "Platform" dropdown, leave the rest as the defaults
 		
-  1. Application code: leave default
+	 - Application code: leave default
 
  1. When the options are configured, click the "Create environment" button
 
@@ -79,7 +79,7 @@ To Create a more streamlined <prefix>.elasticbeanstalk.com URL after initial cre
 
  1. Click the "Swap" button
 
-  1. After a while, the URL that was specified will now point to the correct API instance
+	  - After a while, the URL that was specified will now point to the correct API instance
 
  1. After the URLs have switched, navigate to the new environment
 
@@ -100,7 +100,7 @@ To connect to Solr
 1. In the AWS ec2 instances page, copy the "Public DNS" column data for the primary solr instance, normally "Solr1"
 	
 1. Modify the "solr_server" variable at the top of the CAP_API file to match the info from the AWS page
- 1. It should be something like `http://<old DNS>:8983/solr/collection1/select?` -> `http://<new DNS>:8983/solr/collection1/select?`
+	 - It should be something like `http://<old DNS>:8983/solr/collection1/select?` -> `http://<new DNS>:8983/solr/collection1/select?`
 
 To Update the API code
 ---
