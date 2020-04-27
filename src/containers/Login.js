@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import "./Login.css";
+import {login, checkPermissions} from './UserFunctions';
 
 export default function Login(props) {
   const [email, setEmail] = useState("");
@@ -10,11 +11,28 @@ export default function Login(props) {
     return email.length > 0 && password.length > 0;
   }
 
-  function handleSubmit(event) {
-    //event.preventDefault();
-    //console.log(props);
-    if (email && password)
-        props.history.push('/');
+  function handleSubmit(e) {
+    e.preventDefault();
+    const user = {
+      email: email,
+      password: password
+  }
+    if (email && password) {
+      login(user).then(res => {
+            
+        if (!res.error) {
+          //props.history.push(`/profile`)
+          checkPermissions({token: localStorage.usertoken}).then(res => {
+            localStorage.isAdmin = res.isAdmin;
+            props.history.replace('/');
+          })
+        } else {
+          this.setState({ error: res.error })
+        }
+     
+    })
+    }
+        //props.history.push('/');
   }
 
   return (
