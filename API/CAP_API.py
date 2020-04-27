@@ -27,7 +27,7 @@ db = sql.connect(host='db-mysql-cap.cilr4i0zh8cq.us-east-1.rds.amazonaws.com',
 db_cursor = db.cursor()
 
 # store solr server
-solr_server = 'http://ec2-3-87-73-69.compute-1.amazonaws.com:8983/solr/collection1/select?'
+solr_server = 'http://ec2-3-82-228-23.compute-1.amazonaws.com:8983/solr/collection1/select?'
 
 
 @app.route('/')
@@ -91,14 +91,14 @@ def query_database_all_content():
 
     # properly format newspapers and states
     if newspapers:
-        newspapers_text = ''.join('"{}"'.format(n) for n in newspapers)
+        newspapers_text = ''.join('"{}" '.format(n) for n in newspapers)
         if is_searching_articles:
             query = query + ' AND newspaper:({})'.format(newspapers_text)
         else:
             query = query + 'newspaper:({})'.format(newspapers_text)
 
     if states:
-        states_text = ''.join('"{}"'.format(s) for s in states)
+        states_text = ''.join('"{}" '.format(s) for s in states)
         if is_searching_articles or newspapers:
             query = query + ' AND state:({})'.format(states_text)
         else:
@@ -112,8 +112,11 @@ def query_database_all_content():
         if is_searching_articles or newspapers or states:
             query = query + ' AND publish_date:{}'.format(date_subquery)
 
+    print(query)
+
     full_url = solr_server + urllib.parse.quote(query, "&=()") + end_tags
 
+    print(full_url)
     # Execute built query
     try:
         connection = urlopen(full_url)
@@ -642,7 +645,7 @@ def modify_user_query():
         session_token = request.json["sessionToken"]
         saved_query_id = request.json["queryIDToChange"]
         new_query_name = request.json["newQueryName"]
-        new_query_string = str(request.json["newQueryContent"])
+        # new_query_string = str(request.json["newQueryContent"])
     except KeyError as error:
         import traceback
 
@@ -672,10 +675,11 @@ def modify_user_query():
 
     if request_user_id == database_user_id:
         # User owns query, can update it
-        query = "UPDATE queries SET query_name = %s, query_content = %s WHERE query_id = %s"
+        query = "UPDATE queries SET query_name = %s WHERE query_id = %s"
         try:
             db.ping(True)
-            db_cursor.execute(query, (new_query_name, new_query_string, saved_query_id))
+            db_cursor.execute(query, (new_query_name, saved_query_id))
+            # db_cursor.execute(query, (new_query_name, new_query_string, saved_query_id))
             db.commit()
         except sql.err.InterfaceError as e:
             return jsonify(success=False, message="Database refused connection, please contact administrator")
@@ -883,196 +887,3 @@ def check_admin(session_token):
     else:
         return False, False
 
-
-# noinspection PyUnresolvedReferences
-@app.route('/debugsolr', methods=["POST"])
-@flask_cors.cross_origin()
-def debugsolr():
-    # from flask.ext.solrquery import solr
-    try:
-        any_terms = request.json["any"]
-        article_text_any = '(' + any_terms + ')'
-
-        debug_solr_server = 'http://ec2-3-95-187-89.compute-1.amazonaws.com:8983/solr/collection1/select?'
-        end_tags = '&wt=json&rows=250'
-        # query = 'q=article_text:(Richardson OR uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu)'
-        query = 'q=article_text:({})'.format(article_text_any)
-        # url = solr_server + query + json_response
-        # print(url)
-        # url = url.replace(' ', '%20')
-        # print(url)
-        url = debug_solr_server + urllib.parse.quote(query, "&=()") + end_tags
-        print(url)
-        connection = urlopen(url)
-        # connection = urlopen(
-        #    'http://ec2-3-95-187-89.compute-1.amazonaws.com:8983/solr/collection1/select?q=article_text:burn&wt=json')
-        response = json.load(connection)
-        print(response['response']['numFound'], "documents found.")
-
-        # Print the name of each document.
-
-        for document in response['response']['docs']:
-            print("  Name = %s", document['article_text'])
-    except Exception as fail:
-        import traceback
-
-        print("exception")
-        print(fail)
-        print(fail.__class__)
-        traceback.print_tb(fail.__traceback__)
-        return jsonify(response="exception")
-
-    real_response = {'articles': response['response']['docs']}
-
-    return real_response
-    # return jsonify(response="maybe")
-
-
-@app.route('/debug', methods=["POST"])
-@flask_cors.cross_origin()
-def debug():
-    db.ping(True)
-    """
-    #token = uuid.uuid4()
-    thing = string.ascii_letters + string.digits
-    password = ''.join(random.choice(thing) for i in range(8))
-    hash = hash_password(password)
-
-    import smtplib, ssl
-    smtp_server = "localhost"
-    port = 1025
-    sender_email = "my@email.com"
-    receiver_email = "your@email.com"
-
-    context = ssl.create_default_context()
-
-    try:
-        print("here")
-        server = smtplib.SMTP(smtp_server,port)
-        print("there")
-        #server.starttls(context=context)
-        server.ehlo()
-        print("what")
-        server.sendmail(sender_email,receiver_email,message)
-    except Exception as e:
-        print("exception")
-        print(e)
-    finally:
-        server.quit()
-    """
-    # email = request.json['email']
-    # pw_query = "SELECT user_id FROM users WHERE email = %s"
-    # db_cursor.execute(pw_query, (email,))
-    # results = db_cursor.fetchone()
-    # print(results)
-    # user_id = results[0]
-    # user_email = results[1]
-    # print("email {}\n userid {}".format(email, user_id))
-    # test = request.json["empty"]
-    # booleanthing = test or True
-    # print(test)
-    # if test:
-    #    print("here")
-    # else:
-    #    print("there")
-    # query = "select * from users"
-    # db_cursor.execute(query)
-    # results = db_cursor.fetchall()
-    # print(results)
-    # query = "SELECT user_id, email, isMod, isAdmin FROM users"
-    # db_cursor.execute(query)
-    # results = db_cursor.fetchall()
-    # usersdict = {"users": []}
-
-    # users_list = []
-    # for entry in results:
-    #    user = {
-    #        "userID": entry[0],
-    #        "email": entry[1],
-    #        "isMod": entry[2] == 1,
-    #        "isAdmin": entry[3] == 1
-    #    }
-    #
-    #    users_list.append(user)
-    rowcount = request.json.get("resultCount", 250)
-
-    if rowcount > 250:
-        rowcount = 250
-
-    return jsonify(success=True, rowcount=rowcount)
-    # return jsonify(thingy)
-
-
-@app.route('/movesolr', methods=["POST"])
-@flask_cors.cross_origin()
-def change_solr_link():
-    global solr_server
-    password = request.json['password']
-    new_url = request.json['newSolr']
-    encrypted = "67e83ef51e187f7fdbcbbbcf6eda5588c32ba4051cadd15e499ac73f0ae60ffe689387d8f6eb8ad2172d026f3e0bf1e6aa21816c3a1d14db6774b084a6a29328299bc9c31d4b337100ae3f225683547eb8cac066885937339f22a8092b5c7247"
-
-    salt = encrypted[:64]
-    stored_password = encrypted[64:]
-    pwdhash = hashlib.pbkdf2_hmac('sha512',
-                                  password.encode('utf-8'),
-                                  salt.encode('ascii'),
-                                  100000)
-    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
-
-    verified = pwdhash == stored_password
-
-    if verified:
-        solr_server = new_url
-
-    return jsonify(working=verified, currentSolr=solr_server)
-
-
-@app.route('/stopdb', methods=["POST"])
-@flask_cors.cross_origin()
-def stop_db_connection():
-    global db
-    password = request.json['password']
-    encrypted = "67e83ef51e187f7fdbcbbbcf6eda5588c32ba4051cadd15e499ac73f0ae60ffe689387d8f6eb8ad2172d026f3e0bf1e6aa21816c3a1d14db6774b084a6a29328299bc9c31d4b337100ae3f225683547eb8cac066885937339f22a8092b5c7247"
-
-    salt = encrypted[:64]
-    stored_password = encrypted[64:]
-    pwdhash = hashlib.pbkdf2_hmac('sha512',
-                                  password.encode('utf-8'),
-                                  salt.encode('ascii'),
-                                  100000)
-    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
-
-    verified = pwdhash == stored_password
-
-    if verified:
-        db.close()
-
-    return jsonify(success=verified)
-
-
-@app.route('/startdb', methods=["POST"])
-@flask_cors.cross_origin()
-def start_db_connection():
-    global db
-    global db_cursor
-    password = request.json['password']
-    encrypted = "67e83ef51e187f7fdbcbbbcf6eda5588c32ba4051cadd15e499ac73f0ae60ffe689387d8f6eb8ad2172d026f3e0bf1e6aa21816c3a1d14db6774b084a6a29328299bc9c31d4b337100ae3f225683547eb8cac066885937339f22a8092b5c7247"
-
-    salt = encrypted[:64]
-    stored_password = encrypted[64:]
-    pwdhash = hashlib.pbkdf2_hmac('sha512',
-                                  password.encode('utf-8'),
-                                  salt.encode('ascii'),
-                                  100000)
-    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
-
-    verified = pwdhash == stored_password
-
-    if verified:
-        db = sql.connect(host='db-mysql-cap.cilr4i0zh8cq.us-east-1.rds.amazonaws.com',
-                         database='CAP',
-                         user='admin',
-                         password='Group21capdb')
-        db_cursor = db.cursor()
-
-    return jsonify(success=verified)
